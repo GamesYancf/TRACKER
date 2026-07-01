@@ -39,20 +39,30 @@ let settings = {
   fuelPrice: 6.0,
 };
 
-const map = L.map("map", { zoomControl: false }).setView([-23.5505, -46.6333], 13);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "&copy; OpenStreetMap",
-}).addTo(map);
+let map = null;
+let routeLayer = null;
+let currentMarker = null;
 
-const routeLayer = L.polyline([], { color: "#4f6cff", weight: 6, opacity: 0.9 }).addTo(map);
-const currentMarker = L.circleMarker([0, 0], {
-  radius: 9,
-  color: "#ffffff",
-  weight: 2,
-  fillColor: "#29d6ff",
-  fillOpacity: 0.95,
-}).addTo(map);
-currentMarker.setStyle({ opacity: 0 });
+function initializeMap() {
+  if (!window.L) {
+    throw new Error("Leaflet não foi carregado. Verifique a conexão com a CDN ou o caminho do script.");
+  }
+
+  map = L.map("map", { zoomControl: false }).setView([-23.5505, -46.6333], 13);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap",
+  }).addTo(map);
+
+  routeLayer = L.polyline([], { color: "#4f6cff", weight: 6, opacity: 0.9 }).addTo(map);
+  currentMarker = L.circleMarker([0, 0], {
+    radius: 9,
+    color: "#ffffff",
+    weight: 2,
+    fillColor: "#29d6ff",
+    fillOpacity: 0.95,
+  }).addTo(map);
+  currentMarker.setStyle({ opacity: 0 });
+}
 
 function formatDuration(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -330,6 +340,14 @@ function init() {
   updateStats();
   setInterval(updateTimer, 1000);
 
+  try {
+    initializeMap();
+  } catch (error) {
+    console.error(error);
+    statusText.textContent = "Erro ao iniciar o mapa";
+    mapStatus.textContent = "Leaflet não carregado";
+  }
+
   fuelEfficiencyInput.addEventListener("change", event => {
     const value = parseFloat(event.target.value.replace(",", "."));
     if (!Number.isNaN(value) && value > 0) {
@@ -348,7 +366,15 @@ function init() {
     }
   });
 
-  startBtn.addEventListener("click", startTracking);
+  startBtn.addEventListener("click", () => {
+    try {
+      startTracking();
+    } catch (error) {
+      console.error(error);
+      statusText.textContent = "Erro ao iniciar rastreamento";
+      mapStatus.textContent = "Verifique o console";
+    }
+  });
   stopBtn.addEventListener("click", stopTracking);
   closeReport.addEventListener("click", () => reportDialog.close());
   reportDialog.addEventListener("cancel", event => event.preventDefault());
