@@ -265,24 +265,49 @@ function startTracking() {
         lng: position.coords.longitude,
         timestamp: position.timestamp,
         speed: position.coords.speed !== null ? position.coords.speed * 3.6 : 0,
+        accuracy: position.coords.accuracy || 0,
       };
 
-      if (trackPoints.length) {
-        const previous = trackPoints[trackPoints.length - 1];
-        const distanceDelta = calculateDistance(previous, point);
-        totalDistance += distanceDelta;
-        if (!point.speed && previous.timestamp !== point.timestamp) {
-          const deltaSeconds = (point.timestamp - previous.timestamp) / 1000;
-          point.speed = deltaSeconds ? (distanceDelta / deltaSeconds) * 3.6 : 0;
+      const isFirstPoint = trackPoints.length === 0;
+      if (isFirstPoint) {
+        if (point.accuracy > 60) {
+          mapStatus.textContent = "Aguardando GPS estável";
+          return;
         }
+
+        trackPoints.push(point);
+        lastPosition = point;
+        updateMapRoute();
+        updateStats();
+        mapStatus.textContent = "Rastreamento ativo";
+        return;
       }
 
+      const previous = trackPoints[trackPoints.length - 1];
+      const distanceDelta = calculateDistance(previous, point);
+      const deltaSeconds = (point.timestamp - previous.timestamp) / 1000;
+      const estimatedSpeed = deltaSeconds ? (distanceDelta / deltaSeconds) * 3.6 : 0;
+      if (!point.speed) {
+        point.speed = estimatedSpeed;
+      }
+
+      const isJitter = distanceDelta < 8 && point.speed < 2;
+      const isLowAccuracy = point.accuracy > 80 && point.speed < 2;
+      const isUnrealisticJump = distanceDelta > 70 && point.accuracy > 50 && point.speed < 8;
+
+      if (isJitter || isLowAccuracy || isUnrealisticJump) {
+        mapStatus.textContent = "Aguardando GPS estável";
+        return;
+      }
+
+      totalDistance += distanceDelta;
       currentSpeed = point.speed || 0;
       maxSpeed = Math.max(maxSpeed, currentSpeed);
       trackPoints.push(point);
       lastPosition = point;
       updateMapRoute();
       updateStats();
+      mapStatus.textContent = "Rastreamento ativo";
     },
     error => {
       console.warn(error);
