@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1d1f29" />
+  <meta name="description" content="PWA de rastreamento de rotas para entregadores de moto." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" integrity="sha384-RwXEM6Xex9QDbT9fUZZKJpkoQDmMK0R7pPpc97KqXS/g8c85bGBsnosXz9CnNEmF" crossorigin="" />
+  <title>Tracker de Expediente</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Rastreador de rotas</p>
+        <h1>Tracker de Expediente</h1>
+        <p class="subtitle">Registre seu percurso diário, veja estatísticas e acompanhe gastos com combustível.</p>
+      </div>
+      <button id="installBtn" class="ghost">Instalar app</button>
+    </header>
+
+    <section class="panel start-panel">
+      <div class="button-group">
+        <button id="startBtn" class="primary large">Iniciar Expediente</button>
+        <button id="stopBtn" class="secondary large" disabled>Encerrar Expediente</button>
+      </div>
+      <div class="status-block">
+        <div>
+          <span>Status</span>
+          <strong id="statusText">Inativo</strong>
+        </div>
+        <div>
+          <span>Início</span>
+          <strong id="startTime">--:--</strong>
+        </div>
+        <div>
+          <span>Tempo</span>
+          <strong id="elapsedTime">00:00:00</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid cards-grid">
+      <article class="card">
+        <span>Quilometragem</span>
+        <strong id="distanceText">0,00 km</strong>
+      </article>
+      <article class="card">
+        <span>Velocidade</span>
+        <strong id="speedText">0 km/h</strong>
+      </article>
+      <article class="card">
+        <span>Pontos GPS</span>
+        <strong id="pointsText">0</strong>
+      </article>
+    </section>
+
+    <section class="panel map-panel">
+      <div class="map-header">
+        <div>
+          <p>Mapa em tempo real</p>
+          <span id="mapStatus">Aguardando início</span>
+        </div>
+      </div>
+      <div id="map"></div>
+    </section>
+
+    <section class="panel config-panel">
+      <h2>Configuração de combustível</h2>
+      <div class="form-grid">
+        <label>
+          Consumo médio (km/L)
+          <input id="fuelEfficiency" type="number" min="1" step="0.1" placeholder="20" />
+        </label>
+        <label>
+          Preço do litro (R$)
+          <input id="fuelPrice" type="number" min="0" step="0.01" placeholder="6,00" />
+        </label>
+      </div>
+      <div class="fuel-summary">
+        <div>
+          <span>Litros estimados</span>
+          <strong id="fuelUsedText">0,00 L</strong>
+        </div>
+        <div>
+          <span>Custo estimado</span>
+          <strong id="fuelCostText">R$ 0,00</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel history-panel">
+      <div class="section-header">
+        <h2>Histórico de expedientes</h2>
+        <span id="historyCount">Nenhuma viagem registrada</span>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </section>
+  </div>
+
+  <dialog id="reportDialog" class="report-dialog">
+    <form method="dialog">
+      <h2>Relatório do Expediente</h2>
+      <div class="report-grid">
+        <div>
+          <span>Data</span>
+          <strong id="reportDate">--</strong>
+        </div>
+        <div>
+          <span>Início</span>
+          <strong id="reportStart">--</strong>
+        </div>
+        <div>
+          <span>Término</span>
+          <strong id="reportEnd">--</strong>
+        </div>
+        <div>
+          <span>Tempo total</span>
+          <strong id="reportDuration">--</strong>
+        </div>
+        <div>
+          <span>Km total</span>
+          <strong id="reportDistance">--</strong>
+        </div>
+        <div>
+          <span>Pontos GPS</span>
+          <strong id="reportPoints">--</strong>
+        </div>
+        <div>
+          <span>Velocidade média</span>
+          <strong id="reportAvgSpeed">--</strong>
+        </div>
+        <div>
+          <span>Velocidade máxima</span>
+          <strong id="reportMaxSpeed">--</strong>
+        </div>
+      </div>
+      <p class="report-note">O relatório completo está salvo no histórico e pode ser consultado a qualquer momento.</p>
+      <menu class="dialog-actions">
+        <button id="closeReport" type="submit" class="primary">Fechar</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js" integrity="sha384-I357X98w28BflG4JIDPogc9la2n8fXjZTh0H0z1Y3Q0oF4xpRvEUKG0T7TQJl+fO" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

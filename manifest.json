@@ -1,0 +1,23 @@
+{
+  "name": "Tracker de Expediente",
+  "short_name": "Tracker",
+  "description": "Aplicativo PWA para rastrear rotas e gerar relatórios diários de entregas.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f1320",
+  "theme_color": "#1d1f29",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable_icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
