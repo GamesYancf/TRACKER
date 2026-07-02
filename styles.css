@@ -84,10 +84,36 @@ h1 {
   gap: 18px;
 }
 
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
+.main-swipe-area {
+  display: grid;
+  justify-items: center;
   gap: 12px;
+  padding: 16px 0 8px;
+}
+
+.action-button {
+  width: min(100%, 320px);
+  min-height: 170px;
+  border-radius: 32px;
+  font-size: 1.25rem;
+  box-shadow: 0 24px 60px rgba(79, 108, 255, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 30px 70px rgba(79, 108, 255, 0.34);
+}
+
+.action-button.active {
+  background: linear-gradient(135deg, #ff6b6b, #ff8f3f);
+  color: #fff;
+}
+
+.action-hint {
+  margin: 0;
+  color: #8b97c4;
+  font-size: 0.95rem;
 }
 
 button.primary,
@@ -212,17 +238,60 @@ input::placeholder {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
-.history-panel .section-header {
+.history-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 18, 0.56);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+}
+
+.history-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.history-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(420px, 100vw);
+  height: 100dvh;
+  border-radius: 28px 0 0 28px;
+  padding: 22px;
+  z-index: 30;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  overflow-y: auto;
+}
+
+.history-drawer.is-open {
+  transform: translateX(0);
+}
+
+.drawer-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  margin-bottom: 16px;
+}
+
+.drawer-header h2 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+}
+
+.small {
+  padding: 10px 14px;
+  border-radius: 12px;
 }
 
 .history-list {
   display: grid;
   gap: 12px;
-  margin-top: 16px;
 }
 
 .history-item {

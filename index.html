@@ -22,9 +22,9 @@
     </header>
 
     <section class="panel start-panel">
-      <div class="button-group">
-        <button id="startBtn" class="primary large">Iniciar Expediente</button>
-        <button id="stopBtn" class="secondary large" disabled>Encerrar Expediente</button>
+      <div id="mainSwipeArea" class="main-swipe-area">
+        <button id="mainActionBtn" class="primary large action-button">Iniciar expediente</button>
+        <p class="action-hint">Deslize para a esquerda para ver o histórico</p>
       </div>
       <div class="status-block">
         <div>
@@ -91,14 +91,19 @@
       </div>
     </section>
 
-    <section class="panel history-panel">
-      <div class="section-header">
+  </div>
+
+  <div id="historyOverlay" class="history-overlay"></div>
+  <aside id="historyDrawer" class="history-drawer panel">
+    <div class="drawer-header">
+      <div>
         <h2>Histórico de expedientes</h2>
         <span id="historyCount">Nenhuma viagem registrada</span>
       </div>
-      <div id="historyList" class="history-list"></div>
-    </section>
-  </div>
+      <button id="closeHistoryBtn" class="ghost small" type="button">Fechar</button>
+    </div>
+    <div id="historyList" class="history-list"></div>
+  </aside>
 
   <dialog id="reportDialog" class="report-dialog">
     <form method="dialog">

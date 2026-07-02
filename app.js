@@ -1,6 +1,9 @@
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
+const mainActionBtn = document.getElementById("mainActionBtn");
 const installBtn = document.getElementById("installBtn");
+const historyOverlay = document.getElementById("historyOverlay");
+const historyDrawer = document.getElementById("historyDrawer");
+const closeHistoryBtn = document.getElementById("closeHistoryBtn");
+const swipeArea = document.getElementById("mainSwipeArea");
 const statusText = document.getElementById("statusText");
 const startTimeText = document.getElementById("startTime");
 const elapsedTimeText = document.getElementById("elapsedTime");
@@ -28,6 +31,8 @@ const closeReport = document.getElementById("closeReport");
 let tracking = false;
 let watchId = null;
 let startTime = null;
+let touchStartX = 0;
+let touchEndX = 0;
 let lastPosition = null;
 let totalDistance = 0;
 let currentSpeed = 0;
@@ -42,6 +47,13 @@ let settings = {
 let map = null;
 let routeLayer = null;
 let currentMarker = null;
+let gpsReady = false;
+let stableFixCount = 0;
+const GPS_STABLE_REQUIRED = 3;
+const GPS_ACCEPTABLE_ACCURACY = 50;
+const GPS_MAX_WAIT_ACCURACY = 80;
+const GPS_MIN_DISTANCE = 10;
+const GPS_MAX_JITTER_SPEED = 2;
 
 function initializeMap() {
   if (!window.L) {
@@ -242,6 +254,43 @@ function resetSession() {
   mapStatus.textContent = "Aguardando início";
 }
 
+function setActionButtonState() {
+  if (tracking) {
+    mainActionBtn.textContent = "Encerrar expediente";
+    mainActionBtn.classList.add("active");
+  } else {
+    mainActionBtn.textContent = "Iniciar expediente";
+    mainActionBtn.classList.remove("active");
+  }
+}
+
+function openHistoryDrawer() {
+  historyDrawer.classList.add("is-open");
+  historyOverlay.classList.add("is-open");
+}
+
+function closeHistoryDrawer() {
+  historyDrawer.classList.remove("is-open");
+  historyOverlay.classList.remove("is-open");
+}
+
+function handleSwipeStart(event) {
+  const touch = event.touches[0];
+  touchStartX = touch.clientX;
+}
+
+function handleSwipeEnd(event) {
+  const touch = event.changedTouches[0];
+  touchEndX = touch.clientX;
+  const delta = touchEndX - touchStartX;
+
+  if (delta < -60) {
+    openHistoryDrawer();
+  } else if (delta > 60) {
+    closeHistoryDrawer();
+  }
+}
+
 function startTracking() {
   if (!("geolocation" in navigator)) {
     alert("Geolocalização não disponível neste navegador.");
@@ -250,13 +299,14 @@ function startTracking() {
 
   if (tracking) return;
   tracking = true;
+  gpsReady = false;
+  stableFixCount = 0;
   startTime = Date.now();
   startTimeText.textContent = formatTime(new Date(startTime));
   statusText.textContent = "Rastreando";
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
-  mapStatus.textContent = "Rastreamento ativo";
+  mapStatus.textContent = "Aguardando GPS estável";
   resetSession();
+  setActionButtonState();
 
   watchId = navigator.geolocation.watchPosition(
     position => {
@@ -268,18 +318,24 @@ function startTracking() {
         accuracy: position.coords.accuracy || 0,
       };
 
-      const isFirstPoint = trackPoints.length === 0;
-      if (isFirstPoint) {
-        if (point.accuracy > 60) {
-          mapStatus.textContent = "Aguardando GPS estável";
+      if (!gpsReady) {
+        if (point.accuracy <= GPS_ACCEPTABLE_ACCURACY) {
+          stableFixCount += 1;
+        } else {
+          stableFixCount = 0;
+        }
+
+        if (stableFixCount < GPS_STABLE_REQUIRED) {
+          mapStatus.textContent = `Aguardando GPS estável (${stableFixCount}/${GPS_STABLE_REQUIRED})`;
           return;
         }
 
+        gpsReady = true;
         trackPoints.push(point);
         lastPosition = point;
         updateMapRoute();
         updateStats();
-        mapStatus.textContent = "Rastreamento ativo";
+        mapStatus.textContent = "GPS estável. Rastreando...";
         return;
       }
 
@@ -291,12 +347,12 @@ function startTracking() {
         point.speed = estimatedSpeed;
       }
 
-      const isJitter = distanceDelta < 8 && point.speed < 2;
-      const isLowAccuracy = point.accuracy > 80 && point.speed < 2;
-      const isUnrealisticJump = distanceDelta > 70 && point.accuracy > 50 && point.speed < 8;
+      const isJitter = distanceDelta < GPS_MIN_DISTANCE && point.speed < GPS_MAX_JITTER_SPEED;
+      const isBadAccuracy = point.accuracy > GPS_MAX_WAIT_ACCURACY;
+      const isUnrealisticJump = distanceDelta > 80 && point.speed < 5 && point.accuracy > 40;
 
-      if (isJitter || isLowAccuracy || isUnrealisticJump) {
-        mapStatus.textContent = "Aguardando GPS estável";
+      if (isJitter || isBadAccuracy || isUnrealisticJump) {
+        mapStatus.textContent = "GPS instável — aguardando ponto limpo";
         return;
       }
 
@@ -307,7 +363,7 @@ function startTracking() {
       lastPosition = point;
       updateMapRoute();
       updateStats();
-      mapStatus.textContent = "Rastreamento ativo";
+      mapStatus.textContent = "Rastreando rota";
     },
     error => {
       console.warn(error);
@@ -355,14 +411,14 @@ function stopTracking() {
 
   statusText.textContent = "Inativo";
   mapStatus.textContent = "Expediente finalizado";
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
+  setActionButtonState();
 }
 
 function init() {
   loadSettings();
   loadHistory();
   updateStats();
+  setActionButtonState();
   setInterval(updateTimer, 1000);
 
   try {
@@ -391,16 +447,23 @@ function init() {
     }
   });
 
-  startBtn.addEventListener("click", () => {
+  mainActionBtn.addEventListener("click", () => {
     try {
-      startTracking();
+      if (tracking) {
+        stopTracking();
+      } else {
+        startTracking();
+      }
     } catch (error) {
       console.error(error);
-      statusText.textContent = "Erro ao iniciar rastreamento";
+      statusText.textContent = "Erro ao controlar rastreamento";
       mapStatus.textContent = "Verifique o console";
     }
   });
-  stopBtn.addEventListener("click", stopTracking);
+  closeHistoryBtn.addEventListener("click", closeHistoryDrawer);
+  historyOverlay.addEventListener("click", closeHistoryDrawer);
+  swipeArea.addEventListener("touchstart", handleSwipeStart);
+  swipeArea.addEventListener("touchend", handleSwipeEnd);
   closeReport.addEventListener("click", () => reportDialog.close());
   reportDialog.addEventListener("cancel", event => event.preventDefault());
 
